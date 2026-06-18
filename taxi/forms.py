@@ -1,5 +1,6 @@
 import re
 from django import forms
+from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
 from crispy_forms.helper import FormHelper
@@ -16,7 +17,7 @@ class DriverCreationForm(UserCreationForm):
     license_number = forms.CharField(validators=[validate_license_number])
 
     class Meta(UserCreationForm.Meta):
-        model = Driver
+        model = get_user_model()
         fields = UserCreationForm.Meta.fields + ("license_number",
                                                  "first_name",
                                                  "last_name")
@@ -26,23 +27,15 @@ class DriverLicenseUpdateForm(forms.ModelForm):
     license_number = forms.CharField(validators=[validate_license_number])
 
     class Meta:
-        model = Driver
+        model = get_user_model()
         fields = ("license_number",)
 
 
 class CarForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.helper = FormHelper()
-        self.helper.layout = Layout(
-            Fieldset(
-                "",
-                "model",
-                "manufacturer",
-                "drivers"
-            )
-        )
-        self.fields["drivers"].widget.attrs["class"] = "checkbox"
+        self.fields["drivers"].widget = forms.CheckboxSelectMultiple()
+        self.fields["drivers"].queryset = get_user_model().objects.all()
 
     class Meta:
         model = Car
